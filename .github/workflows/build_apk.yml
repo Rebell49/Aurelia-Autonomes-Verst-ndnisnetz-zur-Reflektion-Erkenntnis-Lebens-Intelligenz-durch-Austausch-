@@ -33,7 +33,6 @@ jobs:
               useradd -ms /bin/bash builduser && \
               echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-          # Android SDK Commandline Tools installieren
           RUN mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools && \
               curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
               unzip /tmp/cmdline-tools.zip -d /tmp && \
@@ -60,7 +59,6 @@ jobs:
               chown -R builduser:builduser /home/builduser/.buildozer && \
               chown -R builduser:builduser /home/builduser/app && \
               su builduser -c '\
-                # Fix long->int in jnius_utils.pxi to prevent build error \
                 sed -i \"s/\\blong\\b/int/g\" ~/.buildozer/android/platform/python-for-android/pythonforandroid/recipes/pyjnius/jnius_utils.pxi || true && \
                 yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses && \
                 ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \"build-tools;36.0.0\" && \
@@ -73,24 +71,22 @@ jobs:
           echo "Aktueller Ordner: $(pwd)"
           echo "Alle Dateien im Workspace:"
           find ${{ github.workspace }} -type f
-          
-          # Suche nach APKs an mehreren typischen Orten
+
           apk_path=$(find ${{ github.workspace }} -type f -name "*.apk" | head -n 1 || echo "")
           echo "Gefundener APK-Pfad: $apk_path"
-          
+
           if [ -z "$apk_path" ]; then
             echo "Keine APK-Datei gefunden! Suche auch im app-Verzeichnis (Docker-Volume):"
             apk_path=$(find ${{ github.workspace }}/app -type f -name "*.apk" | head -n 1 || echo "")
             echo "Gefundener APK-Pfad im app-Verzeichnis: $apk_path"
           fi
-          
+
           if [ -z "$apk_path" ]; then
             echo "Keine APK gefunden, Abbruch."
             exit 1
           fi
-          
-          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
 
+          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

@@ -48,9 +48,15 @@ jobs:
           git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
         fi
 
-    - name: Fehlende Python-Module installieren (Workaround für Buildozer Clean-Fehler)
+    - name: Automatisch benötigte Module erkennen und installieren
       run: |
-        pip install packaging colorama appdirs jinja2 toml   
+        pip install pipreqs
+        pipreqs . --force --encoding=utf-8
+        pip install -r requirements.txt
+
+    - name: Fehlende Python-Module installieren (manuell, falls pipreqs etwas vergisst)
+      run: |
+        pip install packaging colorama appdirs jinja2 toml
 
     - name: Buildozer aufräumen & Update durchführen
       run: |

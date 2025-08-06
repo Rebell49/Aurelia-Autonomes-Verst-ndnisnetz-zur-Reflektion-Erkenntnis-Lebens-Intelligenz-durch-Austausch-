@@ -73,7 +73,7 @@ jobs:
 
     - name: Fehlende Python-Module installieren (manuell, falls pipreqs etwas vergisst)
       run: |
-        pip install packaging colorama appdirs jinja2 toml
+        pip install packaging colorama appdirs jinja2 toml build
 
     - name: Buildozer aufräumen & Update durchführen
       run: |

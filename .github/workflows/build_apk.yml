@@ -78,18 +78,11 @@ jobs:
           sed -i "s/^requirements = .*/requirements = $REQS/" buildozer.spec || echo "requirements = $REQS" >> buildozer.spec
 
       - name: Install requirements
-        run: pip install -r requirements.txt
-
+        run: pip install -r requirements.tx
+      
       - name: Remove BOM from .py files
         run: find . -name '*.py' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
-
-      - name: Generate requirements.txt automatically
-        run: pipreqs . --force --encoding=utf-8
-
-
-      - name: First build attempt (failure expected)
-        run: yes | buildozer android release || true
-
+        
       - name: Initialize autotools for libffi fix
         run: |
           echo "Searching for libffi build directory..."
@@ -116,7 +109,7 @@ jobs:
           aclocal -I m4
           autoreconf --install --force --verbose
 
-      - name: Second build attempt (release)
+      - name: build attempt (release)
         run: yes | buildozer android release
 
       - name: Upload APK artifact

@@ -17,7 +17,7 @@ log_level = 2
 warn_on_root = 1
 android.api = 33
 android.minapi = 21
-android.sdk = 33
+android.sdk = 34
 android.ndk = 25b
 android.ndk_path = 
 android.sdk_path = 
@@ -27,8 +27,6 @@ android.arch = arm64-v8a
 android.gradle_dependencies = 
 android.accept_sdk_license = true
 android.build_tools_version = 34.0.0
-android.sdk = 34
-android.ndk = 25b
 
 
 [android]

@@ -1,32 +1,39 @@
-name: Build Aurelia APK
+name: Build APK
 
 on:
-  workflow_dispatch:  # Manuell starten
-  push:
-    branches:
-      - main           # Passe ggf. an
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 🧾 Checkout Repository
-      uses: actions/checkout@v3
+    - name: 📥 Repository klonen
+      uses: actions/checkout@v4
 
-    - name: 🛠️ Install Dependencies
+    - name: 🐍 Python installieren
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 🛠️ Buildozer & Abhängigkeiten installieren
       run: |
         sudo apt update
-        sudo apt install -y python3-pip python3-setuptools git zip unzip openjdk-8-jdk
-        pip install --upgrade Cython
+        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
+            libgstreamer1.0 libgstreamer1.0-dev libmtdev-dev \
+            libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
+            libasound2-dev libffi-dev
+        pip install --upgrade pip Cython
         pip install buildozer
 
-    - name: 📦 Build APK with Buildozer
+    - name: 🧰 Android SDK vorbereiten
       run: |
+        buildozer android clean
         buildozer android debug
 
-    - name: 📤 Upload APK Artifact
+    - name: 📦 APK hochladen
       uses: actions/upload-artifact@v4
       with:
-        name: Aurelia-debug-apk
+        name: Aurelia-APK
         path: bin/*.apk

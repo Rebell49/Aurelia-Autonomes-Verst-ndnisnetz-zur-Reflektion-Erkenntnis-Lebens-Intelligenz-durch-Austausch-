@@ -71,14 +71,15 @@ jobs:
         id: find_apk
         run: |
          echo "Listing all files in workspace:"
-         find . -type f
-         apk_path=$(find . -name "*.apk" | head -n 1 || echo "")
-         echo "apk_path=$apk_path"
+         find ${{ github.workspace }} -type f
+         apk_path=$(find ${{ github.workspace }} -name "*.apk" | head -n 1 || echo "")
+         echo "apk_path=$apk_path" 
          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
          if [ -z "$apk_path" ]; then
          echo "Keine APK gefunden!"
          exit 1
          fi
+
  
       - name: Upload APK
         uses: actions/upload-artifact@v4

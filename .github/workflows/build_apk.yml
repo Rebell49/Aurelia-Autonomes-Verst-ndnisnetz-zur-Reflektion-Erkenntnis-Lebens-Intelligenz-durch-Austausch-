@@ -31,19 +31,23 @@ jobs:
               useradd -ms /bin/bash builduser && \
               echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-          USER builduser
           WORKDIR /home/builduser/app
-          ENTRYPOINT ["buildozer"]
           EOF
 
       - name: Build Docker image
         run: docker build -t custom-buildozer .
 
+      - name: Fix permissions
+        run: sudo chown -R 1000:1000 .
+
       - name: Run Buildozer as non-root
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/home/builduser/app \
-            custom-buildozer android release
+            custom-buildozer bash -c "\
+              chown -R builduser:builduser /home/builduser/app && \
+              su builduser -c 'cd /home/builduser/app && buildozer android release' \
+            "
 
       - name: Locate APK
         id: find_apk

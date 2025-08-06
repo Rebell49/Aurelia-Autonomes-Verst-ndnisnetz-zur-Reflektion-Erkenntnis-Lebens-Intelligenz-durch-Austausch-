@@ -8,15 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Repository auschecken
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🐍 Python 3.11 installieren
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: ⚙️ Android SDK installieren (Command Line Tools)
+      - name: Install Android SDK Command Line Tools
         run: |
           mkdir -p $HOME/.android/cmdline-tools
           cd $HOME/.android/cmdline-tools
@@ -25,26 +25,26 @@ jobs:
           rm sdk.zip
           mv cmdline-tools latest
 
-      - name: 🔧 Android-Umgebungsvariablen setzen
+      - name: Set Android environment variables
         run: |
           echo "ANDROID_HOME=$HOME/.android" >> $GITHUB_ENV
           echo "$HOME/.android/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/.android/platform-tools" >> $GITHUB_PATH
 
-      - name: ✅ Android SDK Lizenzen akzeptieren
+      - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses || true
 
-      - name: 🔄 pip & essentielle Pakete installieren
+      - name: Upgrade pip and install essential packages
         run: |
           python -m pip install --upgrade pip
           pip install pipreqs build jinja2 toml packaging colorama appdirs
 
-      - name: 🔧 Libtool & autotools vollständig installieren
+      - name: Install libtool and autotools
         run: |
           sudo apt-get update
           sudo apt-get install -y libtool m4 automake autoconf
 
-      - name: 🧰 Systemabhängigkeiten installieren
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -57,10 +57,10 @@ jobs:
             git-core python3-setuptools python3-wheel libstdc++6 \
             pkg-config autoconf automake libtool cmake libncurses-dev
 
-      - name: ☕ Java-Version prüfen
+      - name: Check Java version
         run: java -version
 
-      - name: 🛠️ Buildozer & python-for-android installieren
+      - name: Install Buildozer and python-for-android
         run: |
           pip install --upgrade Cython virtualenv buildozer
           if [ ! -f buildozer.spec ]; then buildozer init; fi
@@ -68,58 +68,56 @@ jobs:
             git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
           fi
 
-      - name: 📄 requirements.txt automatisch erzeugen
+      - name: Generate requirements.txt automatically
         run: pipreqs . --force --encoding=utf-8
 
-      - name: 🔁 buildozer.spec mit requirements.txt aktualisieren
+      - name: Update buildozer.spec with requirements.txt
         run: |
-          echo "Aktualisiere buildozer.spec..."
+          echo "Updating buildozer.spec..."
           REQS=$(paste -sd, requirements.txt)
           sed -i "s/^requirements = .*/requirements = $REQS/" buildozer.spec || echo "requirements = $REQS" >> buildozer.spec
 
-      - name: 📦 requirements installieren
+      - name: Install requirements
         run: pip install -r requirements.txt
 
-      - name: 🧹 BOM-Zeichen aus .py-Dateien entfernen
+      - name: Remove BOM from .py files
         run: |
-          echo "Entferne BOM aus .py-Dateien..."
+          echo "Removing BOM from .py files..."
           find . -name "*.py" -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
 
-      - name: 🧪 Erstversuch: Build starten (Fehlschlag erwartet)
-        run: |
-          yes | buildozer android release || true
+      - name: First build attempt (failure expected)
+        run: yes | buildozer android release || true
 
-      - name: 🔧 Autotools initialisieren für libffi-Fix
+      - name: Initialize autotools for libffi fix
         run: |
-          echo "🔍 Suche libffi Build-Verzeichnis..."
+          echo "Searching for libffi build directory..."
           TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" | head -n 1)
-          echo "📂 Verzeichnis gefunden: $TARGET_DIR"
+          echo "Found directory: $TARGET_DIR"
           if [ -z "$TARGET_DIR" ]; then
-            echo "❌ Kein libffi-Verzeichnis gefunden."
+            echo "No libffi directory found."
             exit 1
           fi
 
           cd "$TARGET_DIR"
 
           if [ ! -f configure.ac ]; then
-            echo "❌ configure.ac nicht gefunden im libffi-Verzeichnis!"
+            echo "configure.ac not found in libffi directory!"
             exit 1
           fi
 
-          echo "🔧 wende libffi m4-Patch an..."
+          echo "Applying libffi m4 patch..."
           sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac
 
-          echo "📦 initialisiere Autotools..."
+          echo "Initializing autotools..."
           libtoolize --force
           mkdir -p m4
           aclocal -I m4
           autoreconf --install --force --verbose
 
-      - name: 🔁 Zweiter Versuch: APK bauen (Release)
-        run: |
-          yes | buildozer android release
+      - name: Second build attempt (release)
+        run: yes | buildozer android release
 
-      - name: ⬆️ APK als Artefakt hochladen
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Aurelia-APK

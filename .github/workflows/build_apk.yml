@@ -44,6 +44,20 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libtool m4 automake autoconf
 
+    - name: 🔧 Autotools initialisieren für libffi-Fix
+      run: |
+        cd .buildozer/android/platform/android-sdk/build-tools \
+           # oder den Pfad zur libffi build-Ordner, z. B.:
+        TARGET_DIR=$(find .buildozer/android/platform/ -type d -name 'libffi' | head -n1)
+        cd "$TARGET_DIR" && \
+        sed -i '/AC_INIT/a\
+        m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac && \
+        libtoolize --force && \
+        aclocal -I m4 && \
+        autoreconf --install --force --verbose
+
+
+
     - name: 🧹 BOM-Zeichen aus .py-Dateien entfernen
       run: |
         echo "Entferne BOM aus .py-Dateien..."

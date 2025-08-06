@@ -17,6 +17,8 @@ jobs:
           FROM ubuntu:22.04
 
           ENV DEBIAN_FRONTEND=noninteractive
+          ENV ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk
+          ENV PATH=\$PATH:\$ANDROID_SDK_ROOT/tools/bin:\$ANDROID_SDK_ROOT/platform-tools
 
           RUN apt-get update && apt-get install -y \
               git zip unzip openjdk-17-jdk python3-pip \
@@ -40,22 +42,25 @@ jobs:
       - name: Fix permissions
         run: sudo chown -R 1000:1000 .
 
-      - name: Run Buildozer as non-root
+      - name: Run Buildozer as non-root and accept licenses
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/home/builduser/app \
             custom-buildozer bash -c "\
               chown -R builduser:builduser /home/builduser/app && \
-              su builduser -c 'cd /home/builduser/app && buildozer android release' \
+              su builduser -c '\
+                yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses && \
+                ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager \"build-tools;36.0.0\" && \
+                cd /home/builduser/app && buildozer android release' \
             "
 
       - name: Locate APK
         id: find_apk
         run: |
-          apk_path=$(find . -name "*.apk" | head -n 1)
-          echo "apk_path=$apk_path"
-          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
-          test -f "$apk_path" || exit 1
+          apk_path=\$(find . -name "*.apk" | head -n 1)
+          echo "apk_path=\$apk_path"
+          echo "apk_path=\$apk_path" >> \$GITHUB_OUTPUT
+          test -f "\$apk_path" || exit 1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

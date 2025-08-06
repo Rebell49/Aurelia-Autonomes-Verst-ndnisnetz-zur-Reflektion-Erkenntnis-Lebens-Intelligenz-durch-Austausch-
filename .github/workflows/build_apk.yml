@@ -15,7 +15,7 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Systemabhängigkeiten installieren
+    - name: Buildozer & Abhängigkeiten installieren
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -34,18 +34,23 @@ jobs:
     - name: Python-Pakete installieren
       run: |
         pip install --upgrade pip Cython virtualenv
-        pip install --upgrade buildozer appdirs
-        pip install packaging
-        
+        pip install --upgrade buildozer
+
     - name: Buildozer initialisieren (falls nötig)
       run: |
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-    - name: python-for-android klonen (Workaround für Fehlendes Verzeichnis)
+    - name: python-for-android klonen (nur wenn nicht vorhanden)
       run: |
-        git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+        if [ ! -d .buildozer/android/platform/python-for-android ]; then
+          git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+        fi
+
+    - name: Fehlende Python-Module installieren (Workaround für Buildozer Clean-Fehler)
+      run: |
+        pip install packaging colorama
 
     - name: Buildozer aufräumen & Update durchführen
       run: |

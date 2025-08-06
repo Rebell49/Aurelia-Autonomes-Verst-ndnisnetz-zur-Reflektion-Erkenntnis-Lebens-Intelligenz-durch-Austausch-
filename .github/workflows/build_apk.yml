@@ -8,17 +8,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name:  Repository klonen
-      uses: actions/checkout@v4
+      - name: Repository klonen
+        uses: actions/checkout@v4
 
-    - name:  Python installieren
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Python installieren
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name:  Buildozer & Abhängigkeiten installieren
-      run: |
-
+      - name: Buildozer & Abhängigkeiten installieren
+        run: |
           sudo apt-get update
           sudo apt-get install -y \
             zip unzip openjdk-17-jdk python3-pip \
@@ -30,31 +29,31 @@ jobs:
             git-core python3-setuptools python3-wheel libstdc++6 \
             pkg-config autoconf automake libtool cmake libncurses-dev
 
-     - name: Java-Version prüfen
+      - name: Java-Version prüfen
         run: java -version
 
-     - name: Python‑Pakete installieren
+      - name: Python-Pakete installieren
         run: |
           pip install --upgrade pip Cython virtualenv
           pip install buildozer
 
-     - name: Buildozer initialisieren (falls nötig)
+      - name: Buildozer initialisieren (falls nötig)
         run: |
           if [ ! -f buildozer.spec ]; then
             buildozer init
           fi
 
-    - name:  Android SDK vorbereiten
-      run: |
-        buildozer android clean
-        buildozer android debug
+      - name: Android SDK vorbereiten
+        run: |
+          buildozer android clean
+          buildozer android debug
 
- - name: APK bauen (Release 1.0, signiert mit Keystore‑ID 144)
+      - name: APK bauen (Release 1.0, signiert mit Keystore-ID 144)
         run: |
           yes | buildozer android release
 
-    - name:  APK hochladen
-      uses: actions/upload-artifact@v4
-      with:
-        name: Aurelia-APK
-        path: bin/*.apk
+      - name: APK hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurelia-APK
+          path: bin/*.apk

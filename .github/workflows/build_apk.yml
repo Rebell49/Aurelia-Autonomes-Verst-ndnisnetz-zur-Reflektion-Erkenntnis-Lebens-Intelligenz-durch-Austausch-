@@ -74,6 +74,18 @@ jobs:
       - name: Initial build attempt (to generate build structure)
         run: yes | buildozer android release || true
 
+      - name: Initialize autotools for libffi fix
+        run: |
+         TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" | head -n 1)
+         cd "$TARGET_DIR"
+    
+         sed -i '1i m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac
+         autoupdate
+         libtoolize --force --copy
+         aclocal -I m4
+         autoreconf --install --force --verbose
+
+
       - name: Apply libffi autotools patch (if needed)
         run: |
           echo "Searching for libffi build directory..."

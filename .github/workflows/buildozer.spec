@@ -27,6 +27,8 @@ android.arch = arm64-v8a
 android.gradle_dependencies = 
 android.accept_sdk_license = true
 android.build_tools_version = 34.0.0
+android.sdk = 34
+android.ndk = 25b
 
 
 [android]

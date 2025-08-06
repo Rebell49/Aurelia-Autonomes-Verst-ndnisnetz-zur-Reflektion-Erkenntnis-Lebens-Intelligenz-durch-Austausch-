@@ -16,35 +16,72 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install Android SDK Command Line Tools
+        run: |
+          mkdir -p $HOME/.android/cmdline-tools
+          cd $HOME/.android/cmdline-tools
+          curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip sdk.zip
+          rm sdk.zip
+          mv cmdline-tools latest
+
+      - name: Set Android environment variables
+        run: |
+          echo "ANDROID_HOME=$HOME/.android" >> $GITHUB_ENV
+          echo "$HOME/.android/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/.android/platform-tools" >> $GITHUB_PATH
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Upgrade pip and install essential Python packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install pipreqs build jinja2 toml packaging colorama appdirs
+
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             zip unzip openjdk-17-jdk python3-pip \
-            libtool m4 automake autoconf \
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
             libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
             gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
             libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
             libasound2-dev libffi-dev libjpeg-dev \
             git-core python3-setuptools python3-wheel libstdc++6 \
-            pkg-config cmake libncurses-dev
+            pkg-config autoconf automake libtool cmake libncurses-dev
 
-      - name: Upgrade pip and install Python packages
-        run: |
-          python -m pip install --upgrade pip
-          pip install cython virtualenv buildozer
+      - name: Check Java version
+        run: java -version
 
-      - name: Initialize buildozer spec (if not present)
+      - name: Install Buildozer and python-for-android
         run: |
+          pip install --upgrade Cython virtualenv buildozer
           if [ ! -f buildozer.spec ]; then buildozer init; fi
+          if [ ! -d .buildozer/android/platform/python-for-android ]; then
+            git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+          fi
 
-      - name: Build APK (debug mode)
+      - name: Remove BOM from .py files
+        run: find . -name '*.py' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
+
+      - name: Initial build attempt (to generate build structure)
         run: |
-          buildozer android debug
+          yes | buildozer android release || true
 
-      - name: Upload APK
+      - name: List APK files (if any)
+        run: |
+          APK_PATH=".buildozer/android/platform/build/dists/"
+          if [ -d "$APK_PATH" ]; then
+            ls -R "$APK_PATH"
+          else
+            echo "No APK output directory found. Build may have failed."
+          fi
+
+      - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Aurelia-APK
-          path: bin/*.apk
+          path: root

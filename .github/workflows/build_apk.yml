@@ -85,6 +85,8 @@ jobs:
          aclocal -I m4
          autoreconf --install --force --verbose
 
+      - name: Build APK (final attempt)
+        run: yes | buildozer android release
 
       - name: Apply libffi autotools patch (if needed)
         run: |
@@ -112,9 +114,6 @@ jobs:
           mkdir -p m4
           aclocal -I m4
           autoreconf --install --force --verbose
-
-      - name: Build APK (final attempt)
-        run: yes | buildozer android release
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

@@ -16,6 +16,18 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name:  SDK Pfade setzen
+      run: |
+        echo "export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
+        echo "export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
+     
+    - name:  Akzeptiere Android SDK Lizenzen
+      run: |
+        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+        yes | sdkmanager --licenses
+
+
     - name:  pip aktualisieren
       run: python -m pip install --upgrade pip
 

@@ -67,18 +67,6 @@ jobs:
           if [ ! -d .buildozer/android/platform/python-for-android ]; then
             git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
           fi
-
-      - name: Generate requirements.txt automatically
-        run: pipreqs . --force --encoding=utf-8
-
-      - name: Update buildozer.spec with requirements.txt
-        run: |
-          echo "Updating buildozer.spec..."
-          REQS=$(paste -sd, requirements.txt)
-          sed -i "s/^requirements = .*/requirements = $REQS/" buildozer.spec || echo "requirements = $REQS" >> buildozer.spec
-
-      - name: Install requirements
-        run: pip install -r requirements.tx
       
       - name: Remove BOM from .py files
         run: find . -name '*.py' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +

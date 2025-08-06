@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create local Dockerfile
+      - name: Create Dockerfile
         run: |
           cat <<EOF > Dockerfile
           FROM ubuntu:22.04
@@ -26,19 +26,24 @@ jobs:
               gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
               libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
               libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
-              python3-setuptools python3-wheel pkg-config cmake curl && \
-              pip3 install --upgrade Cython virtualenv buildozer
+              python3-setuptools python3-wheel pkg-config cmake curl sudo && \
+              pip3 install --upgrade Cython virtualenv buildozer && \
+              useradd -ms /bin/bash builduser && \
+              echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-          WORKDIR /app
+          USER builduser
+          WORKDIR /home/builduser/app
           ENTRYPOINT ["buildozer"]
           EOF
 
       - name: Build Docker image
         run: docker build -t custom-buildozer .
 
-      - name: Run Buildozer in container
+      - name: Run Buildozer as non-root
         run: |
-          docker run --rm -v ${{ github.workspace }}:/app custom-buildozer android release
+          docker run --rm \
+            -v ${{ github.workspace }}:/home/builduser/app \
+            custom-buildozer android release
 
       - name: Locate APK
         id: find_apk

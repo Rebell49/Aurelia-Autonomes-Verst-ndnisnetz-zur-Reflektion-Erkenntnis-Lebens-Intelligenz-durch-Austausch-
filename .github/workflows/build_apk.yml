@@ -89,28 +89,32 @@ jobs:
       run: |
         yes | buildozer android release || true
 
-    - name: 🛠️ libffi-Fix (configure.ac m4-Symbol erlauben)
+    - name: 🔧 Autotools initialisieren für libffi-Fix
       run: |
-        set -e
-        echo "Suche libffi Quellverzeichnis..."
-        TARGET_DIR=$(find .buildozer/android/platform/build*/other_builds/libffi -type d -name "libffi" | head -n 1)
-        echo "Gefunden: $TARGET_DIR"
-        if [ -f "$TARGET_DIR/configure.ac" ]; then
-          echo "Füge m4_pattern_allow Patch ein..."
-          sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' "$TARGET_DIR/configure.ac"
-          cd "$TARGET_DIR"
-          libtoolize --force
-          if [ -d m4 ]; then
-            aclocal -I m4
-          else
-            aclocal
-          fi
-          autoreconf --install --force --verbose
-        else
-          echo "Fehler: configure.ac nicht gefunden."
-          ls -al "$TARGET_DIR"
+        echo "🔍 Suche libffi Build-Verzeichnis..."
+        TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" | head -n 1)
+        echo "📂 Verzeichnis gefunden: $TARGET_DIR"
+        if [ -z "$TARGET_DIR" ]; then
+          echo "❌ Kein libffi-Verzeichnis gefunden."
           exit 1
         fi
+
+        cd "$TARGET_DIR"
+
+        if [ ! -f configure.ac ]; then
+          echo "❌ configure.ac nicht gefunden im libffi-Verzeichnis!"
+          exit 1
+        fi
+
+        echo "🔧 wende libffi m4-Patch an..."
+        sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac
+
+        echo "📦 initialisiere Autotools..."
+        libtoolize --force
+        mkdir -p m4
+        aclocal -I m4
+        autoreconf --install --force --verbose
+
 
     - name: 🔁 Zweiter Versuch: APK bauen (Release)
       run: |

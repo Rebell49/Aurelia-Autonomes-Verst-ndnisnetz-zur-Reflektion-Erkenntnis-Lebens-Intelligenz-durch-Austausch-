@@ -100,7 +100,11 @@ jobs:
           sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' "$TARGET_DIR/configure.ac"
           cd "$TARGET_DIR"
           libtoolize --force
-          aclocal -I m4 || aclocal
+          if [ -d m4 ]; then
+            aclocal -I m4
+          else
+            aclocal
+          fi
           autoreconf --install --force --verbose
         else
           echo "Fehler: configure.ac nicht gefunden."

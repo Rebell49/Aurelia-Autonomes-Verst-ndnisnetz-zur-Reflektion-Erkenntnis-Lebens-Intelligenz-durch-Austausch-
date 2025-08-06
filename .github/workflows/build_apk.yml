@@ -51,7 +51,7 @@ jobs:
       - name: Fix permissions
         run: sudo chown -R 1000:1000 .
 
-      - name: Run Buildozer as non-root and accept licenses
+      - name: Run Buildozer as non-root, fix jnius_utils.pxi, accept licenses and build
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/home/builduser/app \
@@ -60,6 +60,8 @@ jobs:
               chown -R builduser:builduser /home/builduser/.buildozer && \
               chown -R builduser:builduser /home/builduser/app && \
               su builduser -c '\
+                # Fix long->int in jnius_utils.pxi to prevent build error \
+                sed -i \"s/\\blong\\b/int/g\" ~/.buildozer/android/platform/python-for-android/pythonforandroid/recipes/pyjnius/jnius_utils.pxi || true && \
                 yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses && \
                 ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \"build-tools;36.0.0\" && \
                 cd /home/builduser/app && buildozer android release' \
@@ -68,10 +70,10 @@ jobs:
       - name: Locate APK
         id: find_apk
         run: |
-          apk_path=\$(find . -name "*.apk" | head -n 1)
-          echo "apk_path=\$apk_path"
-          echo "apk_path=\$apk_path" >> \$GITHUB_OUTPUT
-          test -f "\$apk_path" || exit 1
+          apk_path=$(find . -name "*.apk" | head -n 1)
+          echo "apk_path=$apk_path"
+          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+          test -f "$apk_path" || exit 1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

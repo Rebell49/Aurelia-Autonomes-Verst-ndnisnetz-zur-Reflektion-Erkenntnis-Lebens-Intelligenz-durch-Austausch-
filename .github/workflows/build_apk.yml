@@ -68,7 +68,7 @@ jobs:
 
       - name: Initial build attempt (to generate build structure)
         run: |
-          yes | buildozer android release || true
+          yes | buildozer android release
 
       - name: List APK files (if any)
         run: |

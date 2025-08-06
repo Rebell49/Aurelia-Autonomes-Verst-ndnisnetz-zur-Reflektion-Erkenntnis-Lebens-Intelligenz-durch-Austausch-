@@ -67,18 +67,30 @@ jobs:
                 cd /home/builduser/app && buildozer android release' \
             "
 
-      - name: Locate APK
+      - name: Locate APK (debug)
         id: find_apk
         run: |
-          echo "Listing all files in workspace:"
+          echo "Aktueller Ordner: $(pwd)"
+          echo "Alle Dateien im Workspace:"
           find ${{ github.workspace }} -type f
-          apk_path=$(find ${{ github.workspace }} -name "*.apk" | head -n 1 || echo "")
-          echo "apk_path=$apk_path"
-          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+          
+          # Suche nach APKs an mehreren typischen Orten
+          apk_path=$(find ${{ github.workspace }} -type f -name "*.apk" | head -n 1 || echo "")
+          echo "Gefundener APK-Pfad: $apk_path"
+          
           if [ -z "$apk_path" ]; then
-            echo "Keine APK gefunden!"
+            echo "Keine APK-Datei gefunden! Suche auch im app-Verzeichnis (Docker-Volume):"
+            apk_path=$(find ${{ github.workspace }}/app -type f -name "*.apk" | head -n 1 || echo "")
+            echo "Gefundener APK-Pfad im app-Verzeichnis: $apk_path"
+          fi
+          
+          if [ -z "$apk_path" ]; then
+            echo "Keine APK gefunden, Abbruch."
             exit 1
           fi
+          
+          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

@@ -50,7 +50,7 @@ jobs:
 
     - name: Fehlende Python-Module installieren (Workaround für Buildozer Clean-Fehler)
       run: |
-        pip install packaging colorama
+        pip install packaging colorama appdirs 
 
     - name: Buildozer aufräumen & Update durchführen
       run: |

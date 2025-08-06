@@ -72,6 +72,10 @@ jobs:
       run: |
         buildozer android clean
         buildozer android update
+        
+    - name: 📄 Android SDK Lizenz automatisch akzeptieren
+      run: |
+        yes | sdkmanager --licenses || true
 
     - name:  APK bauen (Release-Modus)
       run: |

@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK with Buildozer (Docker Safe Pull)
 
 on:
   workflow_dispatch:
@@ -8,32 +8,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Disable BuildKit and Pull Buildozer Image
+      - name: Set up Docker (disable BuildKit)
         run: |
-          echo '{ "features": { "buildkit": false } }' | sudo tee /etc/docker/daemon.json
-          sudo systemctl restart docker
-          docker pull kivy/buildozer:latest
+          export DOCKER_BUILDKIT=0
 
-      - name: Build APK using Buildozer (Docker)
+      - name: Run Buildozer inside Docker
         run: |
           docker run --rm -v ${{ github.workspace }}:/app \
-            -w /app \
-            kivy/buildozer:latest \
-            bash -c "
-              pip install --upgrade buildozer
-              if [ ! -f buildozer.spec ]; then buildozer init; fi
-              yes | buildozer android release
-            "
+            kivy/buildozer \
+            /bin/bash -c "\
+              cd /app && \
+              pip install --upgrade buildozer && \
+              if [ ! -f buildozer.spec ]; then buildozer init; fi && \
+              yes | buildozer android release"
 
       - name: Find generated APK
         id: find_apk
         run: |
           apk_path=$(find . -type f -name "*.apk" | head -n 1)
+          echo "apk_path=$apk_path"
           if [ -z "$apk_path" ]; then
-            echo "No APK found."
+            echo "No APK file found!"
             exit 1
           fi
           echo "apk_path=$apk_path" >> $GITHUB_OUTPUT

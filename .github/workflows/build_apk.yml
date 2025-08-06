@@ -31,6 +31,12 @@ jobs:
     - name:  requirements.txt automatisch erzeugen
       run: |
         pipreqs . --force --encoding=utf-8
+        
+    - name:  Update buildozer.spec mit requirements.txt
+      run: |
+        echo "Aktualisiere buildozer.spec mit requirements.txt-Inhalten..."
+        REQS=$(paste -sd, requirements.txt)
+        sed -i "s/^requirements = .*/requirements = $REQS/" buildozer.spec
 
     - name:  Abhängigkeiten aus requirements.txt installieren
       run: |

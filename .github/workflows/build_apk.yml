@@ -74,8 +74,12 @@ jobs:
       - name: Initial build attempt (to generate build structure)
         run: yes | buildozer android release || true
 
+      - name: List APK files
+        run: ls -R .buildozer/android/platform/build/dists/
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Aurelia-APK
-          path: bin/*.apk
+          path: .buildozer/android/platform/build/dists/*/bin/*.apk
+

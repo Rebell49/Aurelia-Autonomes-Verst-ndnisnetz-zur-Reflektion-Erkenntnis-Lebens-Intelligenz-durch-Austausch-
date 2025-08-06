@@ -44,20 +44,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libtool m4 automake autoconf
 
-    - name: 🔧 Autotools initialisieren für libffi-Fix
-      run: |
-        cd .buildozer/android/platform/android-sdk/build-tools \
-           # oder den Pfad zur libffi build-Ordner, z. B.:
-        TARGET_DIR=$(find .buildozer/android/platform/ -type d -name 'libffi' | head -n1)
-        cd "$TARGET_DIR" && \
-        sed -i '/AC_INIT/a\
-        m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac && \
-        libtoolize --force && \
-        aclocal -I m4 && \
-        autoreconf --install --force --verbose
-
-
-
     - name: 🧹 BOM-Zeichen aus .py-Dateien entfernen
       run: |
         echo "Entferne BOM aus .py-Dateien..."
@@ -98,6 +84,22 @@ jobs:
         if [ ! -d .buildozer/android/platform/python-for-android ]; then
           git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
         fi
+
+    - name: 🛠️ Fix libffi configure.ac für LT_SYS_SYMBOL_USCORE
+      run: |
+        set -e
+        TARGET_DIR=$(find .buildozer -type d -name "libffi" | head -n 1)
+        echo "Gefundenes libffi-Verzeichnis: $TARGET_DIR"
+           if [ -f "$TARGET_DIR/configure.ac" ]; then
+            sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' "$TARGET_DIR/configure.ac"
+            cd "$TARGET_DIR"
+          libtoolize --force
+         aclocal -I m4 || aclocal
+         autoreconf --install --force --verbose
+         else
+         echo "Fehler: configure.ac wurde nicht gefunden."
+         exit 1
+         fi
 
     - name: 🧪 APK bauen (Release)
       run: |

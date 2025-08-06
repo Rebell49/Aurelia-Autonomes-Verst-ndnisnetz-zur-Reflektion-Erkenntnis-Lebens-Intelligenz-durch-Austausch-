@@ -36,6 +36,12 @@ jobs:
         run: |
           pip install --upgrade pip Cython virtualenv
           pip install buildozer
+          
+      - name: Buildozer vorbereiten & bauen
+        run: |
+          buildozer android clean
+          buildozer android update
+          yes | buildozer android release
 
       - name: Buildozer initialisieren (falls nötig)
         run: |

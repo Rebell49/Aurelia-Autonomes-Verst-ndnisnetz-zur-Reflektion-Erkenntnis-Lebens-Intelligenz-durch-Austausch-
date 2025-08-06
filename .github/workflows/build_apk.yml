@@ -16,12 +16,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Pull Buildozer Docker image
-        run: docker pull kivy/buildozer
+      - name: Disable BuildKit and Pull Buildozer Docker image
+        run: |
+          DOCKER_BUILDKIT=0 docker pull kivy/buildozer
 
       - name: Run Buildozer in Docker container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/app \
+          DOCKER_BUILDKIT=0 docker run --rm -v ${{ github.workspace }}:/app \
             -w /app \
             kivy/buildozer \
             bash -c "

@@ -25,6 +25,9 @@ android.private_storage = True
 android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,FOREGROUND_SERVICE
 android.arch = arm64-v8a
 android.gradle_dependencies = 
+android.accept_sdk_license = true
+android.build_tools_version = 34.0.0
+
 
 [android]
 android.manifest.intent_filters = 

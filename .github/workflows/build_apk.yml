@@ -8,31 +8,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Repository klonen
+    - name:  Repository klonen
       uses: actions/checkout@v4
 
-    - name: 🐍 Python installieren
+    - name:  Python installieren
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name: 🛠️ Buildozer & Abhängigkeiten installieren
+    - name:  Buildozer & Abhängigkeiten installieren
       run: |
-        sudo apt update
-        sudo apt install -y zip unzip openjdk-17-jdk python3-pip libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
-            libgstreamer1.0 libgstreamer1.0-dev libmtdev-dev \
-            libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
-            libasound2-dev libffi-dev
-        pip install --upgrade pip Cython
-        pip install buildozer
 
-    - name: 🧰 Android SDK vorbereiten
+          sudo apt-get update
+          sudo apt-get install -y \
+            zip unzip openjdk-17-jdk python3-pip \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
+            libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
+            libasound2-dev libffi-dev libjpeg-dev \
+            git-core python3-setuptools python3-wheel libstdc++6 \
+            pkg-config autoconf automake libtool cmake libncurses-dev
+
+     - name: Java-Version prüfen
+        run: java -version
+
+     - name: Python‑Pakete installieren
+        run: |
+          pip install --upgrade pip Cython virtualenv
+          pip install buildozer
+
+     - name: Buildozer initialisieren (falls nötig)
+        run: |
+          if [ ! -f buildozer.spec ]; then
+            buildozer init
+          fi
+
+    - name:  Android SDK vorbereiten
       run: |
         buildozer android clean
         buildozer android debug
 
-    - name: 📦 APK hochladen
+ - name: APK bauen (Release 1.0, signiert mit Keystore‑ID 144)
+        run: |
+          yes | buildozer android release
+
+    - name:  APK hochladen
       uses: actions/upload-artifact@v4
       with:
         name: Aurelia-APK

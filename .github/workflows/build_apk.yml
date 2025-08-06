@@ -54,6 +54,8 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/home/builduser/app \
             custom-buildozer bash -c "\
+              mkdir -p /home/builduser/.buildozer/cache && \
+              chown -R builduser:builduser /home/builduser/.buildozer && \
               chown -R builduser:builduser /home/builduser/app && \
               su builduser -c '\
                 yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses && \

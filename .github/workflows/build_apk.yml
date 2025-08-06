@@ -79,8 +79,8 @@ jobs:
             echo "No APK output directory found. Build may have failed."
           fi
 
-      -       - name: Find built APK
-         id: find_apk
+      - name: Find built APK
+        id: find_apk
         run: |
           apk_path=$(find . -name "*.apk" | head -n 1)
           if [ -z "$apk_path" ]; then

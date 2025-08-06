@@ -39,11 +39,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install pipreqs build jinja2 toml packaging colorama appdirs
 
-      - name: Install libtool and autotools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libtool m4 automake autoconf
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -67,12 +62,6 @@ jobs:
           if [ ! -d .buildozer/android/platform/python-for-android ]; then
             git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
           fi
-
-      - name: Initialize libtool macros (Fix LT_SYS_SYMBOL_USCORE error)
-        run: |
-          cd .buildozer/android/platform/python-for-android
-          libtoolize --force
-          aclocal
 
       - name: Remove BOM from .py files
         run: find . -name '*.py' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +

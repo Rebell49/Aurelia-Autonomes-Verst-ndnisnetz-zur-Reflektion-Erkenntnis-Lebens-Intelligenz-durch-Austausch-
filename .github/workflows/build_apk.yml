@@ -8,20 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name:  Repository auschecken
+    - name: 📦 Repository auschecken
       uses: actions/checkout@v4
 
-    - name:  Python installieren
+    - name: 🐍 Python 3.11 installieren
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name:  SDK Pfade setzen
-      run: |
-        echo "export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-        echo "export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
-
-    - name:  Android SDK (Command Line Tools) installieren
+    - name: ⚙️ Android SDK installieren (Command Line Tools)
       run: |
         mkdir -p $HOME/.android/cmdline-tools
         cd $HOME/.android/cmdline-tools
@@ -30,40 +25,38 @@ jobs:
         rm sdk.zip
         mv cmdline-tools latest
 
-    - name:  Android SDK-Tools in den PATH setzen & Lizenzen akzeptieren
+    - name: 🔧 Android-Umgebungsvariablen setzen
       run: |
-        export ANDROID_HOME=$HOME/.android
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-        yes | sdkmanager --licenses
+        echo "ANDROID_HOME=$HOME/.android" >> $GITHUB_ENV
+        echo "$HOME/.android/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$HOME/.android/platform-tools" >> $GITHUB_PATH
 
+    - name: ✅ Android SDK Lizenzen akzeptieren
+      run: yes | sdkmanager --licenses || true
 
-    - name:  pip aktualisieren
-      run: python -m pip install --upgrade pip
-
-    - name:  Notwendige Python-Pakete installieren (Grundlage)
+    - name: 🔄 pip & essentielle Pakete installieren
       run: |
+        python -m pip install --upgrade pip
         pip install pipreqs build jinja2 toml packaging colorama appdirs
 
-    - name:  BOM-Zeichen aus .py-Dateien entfernen
+    - name: 🧹 BOM-Zeichen aus .py-Dateien entfernen
       run: |
         echo "Entferne BOM aus .py-Dateien..."
         find . -name "*.py" -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
 
-    - name:  requirements.txt automatisch erzeugen
+    - name: 📄 requirements.txt automatisch erzeugen
+      run: pipreqs . --force --encoding=utf-8
+
+    - name: 🔁 buildozer.spec mit requirements.txt aktualisieren
       run: |
-        pipreqs . --force --encoding=utf-8
-        
-    - name:  Update buildozer.spec mit requirements.txt
-      run: |
-        echo "Aktualisiere buildozer.spec mit requirements.txt-Inhalten..."
+        echo "Aktualisiere buildozer.spec..."
         REQS=$(paste -sd, requirements.txt)
-        sed -i "s/^requirements = .*/requirements = $REQS/" buildozer.spec
+        sed -i "s/^requirements = .*/requirements = $REQS/" buildozer.spec || echo "requirements = $REQS" >> buildozer.spec
 
-    - name:  Abhängigkeiten aus requirements.txt installieren
-      run: |
-        pip install -r requirements.txt
+    - name: 📦 requirements installieren
+      run: pip install -r requirements.txt
 
-    - name:  Buildozer & systemweite Abhängigkeiten installieren
+    - name: 🧰 Systemabhängigkeiten installieren
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -76,34 +69,22 @@ jobs:
           git-core python3-setuptools python3-wheel libstdc++6 \
           pkg-config autoconf automake libtool cmake libncurses-dev
 
-    - name:  Java-Version prüfen
+    - name: ☕ Java-Version prüfen
       run: java -version
 
-    - name:  Buildozer & virtuelle Umgebung installieren
+    - name: 🛠️ Buildozer & python-for-android installieren
       run: |
         pip install --upgrade Cython virtualenv buildozer
-
-    - name:  buildozer.spec initialisieren (nur falls nicht vorhanden)
-      run: |
-        if [ ! -f buildozer.spec ]; then
-          buildozer init
-        fi
-
-    - name:  python-for-android klonen (falls nicht vorhanden)
-      run: |
+        if [ ! -f buildozer.spec ]; then buildozer init; fi
         if [ ! -d .buildozer/android/platform/python-for-android ]; then
           git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
         fi
-        
-    - name:  Android SDK Lizenz automatisch akzeptieren
-      run: |
-        yes | sdkmanager --licenses || true
 
-    - name:  APK bauen (Release-Modus)
+    - name: 🧪 APK bauen (Release)
       run: |
         yes | buildozer android release
 
-    - name:  APK hochladen als Artefakt
+    - name: ⬆️ APK als Artefakt hochladen
       uses: actions/upload-artifact@v4
       with:
         name: Aurelia-APK

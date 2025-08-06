@@ -34,7 +34,7 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses || true
 
-      - name: Upgrade pip and install essential packages
+      - name: Upgrade pip and install essential Python packages
         run: |
           python -m pip install --upgrade pip
           pip install pipreqs build jinja2 toml packaging colorama appdirs
@@ -67,18 +67,22 @@ jobs:
           if [ ! -d .buildozer/android/platform/python-for-android ]; then
             git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
           fi
-      
+
       - name: Remove BOM from .py files
         run: find . -name '*.py' -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
-        
-      - name: Initialize autotools for libffi fix
+
+      - name: Initial build attempt (to generate build structure)
+        run: yes | buildozer android release || true
+
+      - name: Apply libffi autotools patch (if needed)
         run: |
           echo "Searching for libffi build directory..."
-          TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" | head -n 1)
+          TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" 2>/dev/null | head -n 1 || true)
           echo "Found directory: $TARGET_DIR"
+
           if [ -z "$TARGET_DIR" ]; then
-            echo "No libffi directory found."
-            exit 1
+            echo "No libffi directory found - skipping patch."
+            exit 0
           fi
 
           cd "$TARGET_DIR"
@@ -97,7 +101,7 @@ jobs:
           aclocal -I m4
           autoreconf --install --force --verbose
 
-      - name: build attempt (release)
+      - name: Build APK (final attempt)
         run: yes | buildozer android release
 
       - name: Upload APK artifact

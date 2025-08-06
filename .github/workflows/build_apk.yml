@@ -74,47 +74,6 @@ jobs:
       - name: Initial build attempt (to generate build structure)
         run: yes | buildozer android release || true
 
-      - name: Initialize autotools for libffi fix
-        run: |
-         TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" | head -n 1)
-         cd "$TARGET_DIR"
-    
-         sed -i '1i m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac
-         autoupdate
-         libtoolize --force --copy
-         aclocal -I m4
-         autoreconf --install --force --verbose
-
-      - name: Build APK (final attempt)
-        run: yes | buildozer android release
-
-      - name: Apply libffi autotools patch (if needed)
-        run: |
-          echo "Searching for libffi build directory..."
-          TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" 2>/dev/null | head -n 1 || true)
-          echo "Found directory: $TARGET_DIR"
-
-          if [ -z "$TARGET_DIR" ]; then
-            echo "No libffi directory found - skipping patch."
-            exit 0
-          fi
-
-          cd "$TARGET_DIR"
-
-          if [ ! -f configure.ac ]; then
-            echo "configure.ac not found in libffi directory!"
-            exit 1
-          fi
-
-          echo "Applying libffi m4 patch..."
-          sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac
-
-          echo "Initializing autotools..."
-          libtoolize --force
-          mkdir -p m4
-          aclocal -I m4
-          autoreconf --install --force --verbose
-
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:

@@ -79,9 +79,20 @@ jobs:
             echo "No APK output directory found. Build may have failed."
           fi
 
+      -       - name: Find built APK
+         id: find_apk
+        run: |
+          apk_path=$(find . -name "*.apk" | head -n 1)
+          if [ -z "$apk_path" ]; then
+            echo "❌ No APK found."
+            exit 1
+          fi
+          echo "✅ Found APK at: $apk_path"
+          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+
       - name: Upload APK artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Aurelia-APK
-          path: root
+          path: ${{ steps.find_apk.outputs.apk_path }}
+

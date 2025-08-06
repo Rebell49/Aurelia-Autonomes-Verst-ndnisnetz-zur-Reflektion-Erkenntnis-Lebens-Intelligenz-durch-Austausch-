@@ -80,10 +80,24 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements.txt
 
-      - name: Remove BOM from .py files
+      - name: Remove BOM from .py files (using Python)
         run: |
-          echo "Removing BOM from .py files..."
-          find . -name "*.py" -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
+          python3 -c "
+          import os
+          for root, _, files in os.walk('.'):
+        for f in files:
+             if f.endswith('.py'):
+               path = os.path.join(root, f)
+                with open(path, 'rb') as file:
+                   content = file.read()
+              if content.startswith(b'\xef\xbb\xbf'):
+                   with open(path, 'wb') as file:
+                    file.write(content[3:])
+ "  
+      
+      - name: Generate requirements.txt automatically
+        run: pipreqs . --force --encoding=utf-8
+
 
       - name: First build attempt (failure expected)
         run: yes | buildozer android release || true

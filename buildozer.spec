@@ -1,4 +1,4 @@
-﻿[app]
+[app]
 title = Aurelia
 package.name = aurelia
 package.domain = org.aurelia

@@ -15,7 +15,7 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Buildozer & Abhängigkeiten installieren
+    - name: Systemabhängigkeiten installieren
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -34,7 +34,7 @@ jobs:
     - name: Python-Pakete installieren
       run: |
         pip install --upgrade pip Cython virtualenv
-        pip install --upgrade buildozer
+        pip install --upgrade buildozer appdirs
 
     - name: Buildozer initialisieren (falls nötig)
       run: |

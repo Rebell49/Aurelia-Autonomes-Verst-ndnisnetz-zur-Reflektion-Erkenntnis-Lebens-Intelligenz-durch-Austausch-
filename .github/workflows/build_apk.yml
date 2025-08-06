@@ -8,19 +8,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Disable BuildKit and Pull Docker Image
+      - name: Disable BuildKit and Pull Buildozer Image
         run: |
-          export DOCKER_BUILDKIT=0
+          echo '{ "features": { "buildkit": false } }' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
           docker pull kivy/buildozer:latest
 
-      - name: Run Buildozer in Docker container
+      - name: Build APK using Buildozer (Docker)
         run: |
           docker run --rm -v ${{ github.workspace }}:/app \
             -w /app \
-            kivy/buildozer \
+            kivy/buildozer:latest \
             bash -c "
               pip install --upgrade buildozer
               if [ ! -f buildozer.spec ]; then buildozer init; fi
@@ -37,7 +38,7 @@ jobs:
           fi
           echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Aurelia-APK

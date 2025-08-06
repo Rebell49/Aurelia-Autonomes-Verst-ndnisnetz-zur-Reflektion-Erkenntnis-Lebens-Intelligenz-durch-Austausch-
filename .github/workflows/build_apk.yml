@@ -35,7 +35,8 @@ jobs:
       run: |
         pip install --upgrade pip Cython virtualenv
         pip install --upgrade buildozer appdirs
-
+        pip install packaging
+        
     - name: Buildozer initialisieren (falls nötig)
       run: |
         if [ ! -f buildozer.spec ]; then

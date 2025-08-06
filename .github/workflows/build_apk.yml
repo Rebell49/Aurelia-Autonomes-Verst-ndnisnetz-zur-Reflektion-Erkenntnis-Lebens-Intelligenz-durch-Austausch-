@@ -20,10 +20,19 @@ jobs:
       run: |
         echo "export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
         echo "export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
-     
-    - name:  Akzeptiere Android SDK Lizenzen
+
+    - name:  Android SDK (Command Line Tools) installieren
       run: |
-        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $HOME/.android/cmdline-tools
+        cd $HOME/.android/cmdline-tools
+        curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip sdk.zip
+        rm sdk.zip
+        mv cmdline-tools latest
+
+    - name:  Android SDK-Tools in den PATH setzen & Lizenzen akzeptieren
+      run: |
+        export ANDROID_HOME=$HOME/.android
         export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
         yes | sdkmanager --licenses
 

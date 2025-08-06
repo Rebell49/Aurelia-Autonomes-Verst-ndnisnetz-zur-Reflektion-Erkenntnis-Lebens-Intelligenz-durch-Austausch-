@@ -89,31 +89,50 @@ jobs:
       run: |
         yes | buildozer android release || true
 
-    - name: 🔧 Autotools initialisieren für libffi-Fix
-      run: |
-        echo "🔍 Suche libffi Build-Verzeichnis..."
-        TARGET_DIR=$(find .buildozer/android/platform/build -type d -name "libffi" | head -n 1)
-        echo "📂 Verzeichnis gefunden: $TARGET_DIR"
-        if [ -z "$TARGET_DIR" ]; then
-          echo "❌ Kein libffi-Verzeichnis gefunden."
-          exit 1
-        fi
+   jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # ... deine bisherigen Schritte ...
 
-        cd "$TARGET_DIR"
+      - name: 🧪 Erstversuch: Build starten (Fehlschlag erwartet)
+        run: yes | buildozer android release || true
 
-        if [ ! -f configure.ac ]; then
-          echo "❌ configure.ac nicht gefunden im libffi-Verzeichnis!"
-          exit 1
-        fi
+      - name: 🔧 Autotools initialisieren für libffi-Fix
+        shell: bash
+        run: |
+          echo "🔍 Suche libffi Build-Verzeichnis..."
+          TARGET_DIR=$(find .buildozer/android/platform/python-for-android -type d -name "libffi" | head -n 1)
+          echo "📂 Verzeichnis gefunden: $TARGET_DIR"
+          if [ -z "$TARGET_DIR" ]; then
+            echo "❌ Kein libffi-Verzeichnis gefunden."
+            exit 1
+          fi
 
-        echo "🔧 wende libffi m4-Patch an..."
-        sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac
+          cd "$TARGET_DIR" || exit 1
 
-        echo "📦 initialisiere Autotools..."
-        libtoolize --force
-        mkdir -p m4
-        aclocal -I m4
-        autoreconf --install --force --verbose
+          if [ ! -f configure.ac ]; then
+            echo "❌ configure.ac nicht gefunden im libffi-Verzeichnis!"
+            exit 1
+          fi
+
+          echo "🔧 wende libffi m4-Patch an..."
+          sed -i '/AC_INIT/a m4_pattern_allow([LT_SYS_SYMBOL_USCORE])' configure.ac
+
+          echo "📦 initialisiere Autotools..."
+          libtoolize --force
+          mkdir -p m4
+          aclocal -I m4
+          autoreconf --install --force --verbose
+
+      - name: 🔁 Zweiter Versuch: APK bauen (Release)
+        run: yes | buildozer android release
+
+      - name: ⬆️ APK als Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurelia-APK
+          path: bin/*.apk
 
 
     - name: 🔁 Zweiter Versuch: APK bauen (Release)

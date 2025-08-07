@@ -45,7 +45,6 @@ jobs:
           RUN yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" && \
               yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
-          # Workaround für Buildozer: symbolischer Link zu sdkmanager im alten Pfad
           RUN ln -s \$ANDROID_SDK_ROOT/cmdline-tools/latest \$ANDROID_SDK_ROOT/tools
 
           WORKDIR /home/builduser/app
@@ -57,7 +56,7 @@ jobs:
       - name: Fix permissions
         run: sudo chown -R 1000:1000 ${{ github.workspace }}
 
-      - name: Run Buildozer and log output
+      - name: Run Buildozer
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/home/builduser/app \
@@ -75,11 +74,7 @@ jobs:
                   echo \"Patching jnius_utils.pxi...\"
                   sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"
                 fi
-                buildozer android release --log buildozer.log || (
-                  echo \"Erster Build fehlgeschlagen. Versuche erneut...\" &&
-                  sleep 10 &&
-                  buildozer android release --log buildozer.log
-                )
+                buildozer android release
               '
             "
 
@@ -111,10 +106,3 @@ jobs:
           files: ${{ steps.find_apk.outputs.apk_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Buildozer Log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: buildozer-log
-          path: buildozer.log

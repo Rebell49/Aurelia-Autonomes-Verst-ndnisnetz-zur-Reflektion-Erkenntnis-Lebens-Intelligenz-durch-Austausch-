@@ -28,6 +28,7 @@ jobs:
               gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
               libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
               libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
+              libssl-dev openssl \
               python3-setuptools python3-wheel pkg-config cmake curl sudo && \
               pip3 install --upgrade pip setuptools wheel && \
               pip3 install "Cython<3.0" virtualenv buildozer

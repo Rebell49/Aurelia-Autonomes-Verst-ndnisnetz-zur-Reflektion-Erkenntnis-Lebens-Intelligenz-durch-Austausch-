@@ -13,36 +13,40 @@ jobs:
 
       - name: Create Dockerfile
         run: |
-         cat <<EOF > Dockerfile
-         FROM ubuntu:22.04
-         ENV DEBIAN_FRONTEND=noninteractive
-         ENV ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk
-         ENV PATH=\$PATH:\$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\$ANDROID_SDK_ROOT/platform-tools
-          RUN apt-get update && apt-get install -y \
-          git zip unzip openjdk-17-jdk python3-pip \
-         build-essential libtool m4 automake autoconf \
-         libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-         libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
-         gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
-         libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
-         libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
-         libssl-dev openssl \
-         python3-setuptools python3-wheel pkg-config cmake curl sudo && \
-         pip3 install --upgrade pip setuptools wheel && \
-         pip3 install "Cython<3.0" virtualenv buildozer
-         RUN useradd -ms /bin/bash builduser && \
-         echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-         RUN mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools && \
-         curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
-         unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools && \
-         mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools/latest && \
-         mv /tmp/cmdline-tools/cmdline-tools \$ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools && \
-         rm -rf /tmp/cmdline-tools /tmp/cmdline-tools.zip
-         RUN yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" && \
-           yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/cmdline-tools/bin/sdkmanager --licenses
-          WORKDIR /home/builduser/app
-         EOF
+          cat <<EOF > Dockerfile
+          FROM ubuntu:22.04
+          ENV DEBIAN_FRONTEND=noninteractive
+          ENV ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk
+          ENV PATH=\$PATH:\$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\$ANDROID_SDK_ROOT/platform-tools
 
+          RUN apt-get update && apt-get install -y \
+            git zip unzip openjdk-17-jdk python3-pip \
+            build-essential libtool m4 automake autoconf \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
+            libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
+            libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
+            libssl-dev openssl \
+            python3-setuptools python3-wheel pkg-config cmake curl sudo && \
+            pip3 install --upgrade pip setuptools wheel && \
+            pip3 install "Cython<3.0" virtualenv buildozer
+
+          RUN useradd -ms /bin/bash builduser && \
+            echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+          RUN mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools && \
+            curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
+            unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools && \
+            mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools/latest && \
+            mv /tmp/cmdline-tools/cmdline-tools/* \$ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
+            rm -rf /tmp/cmdline-tools /tmp/cmdline-tools.zip
+
+          RUN yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" && \
+              yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          WORKDIR /home/builduser/app
+          EOF
 
       - name: Build Docker image
         run: docker build -t custom-buildozer .

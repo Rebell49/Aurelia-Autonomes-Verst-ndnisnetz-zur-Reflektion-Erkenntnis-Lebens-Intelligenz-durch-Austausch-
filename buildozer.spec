@@ -5,7 +5,7 @@ package.domain = org.aurelia
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
-requirements = python3,kivy,packaging,colorama
+requirements = python3,kivy,packaging,colorama,openssl,pyopenssl,requests
 orientation = portrait
 fullscreen = 1
 osx.python_version = 3
@@ -19,15 +19,15 @@ android.api = 34
 android.minapi = 21
 android.sdk = 34
 android.ndk = 25b
-android.ndk_path = 
-android.sdk_path = 
+android.ndk_path =
+android.sdk_path =
 android.private_storage = True
-android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,FOREGROUND_SERVICE
+android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,FOREGROUND_SERVICE,
 android.arch = arm64-v8a
-android.gradle_dependencies = 
+android.gradle_dependencies =
 android.accept_sdk_license = true
 android.build_tools_version = 34.0.0
 
-
 [android]
-android.manifest.intent_filters = 
+# Falls du Intent-Filter brauchst, hier ein Beispiel:
+# android.manifest.intent_filters = <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>

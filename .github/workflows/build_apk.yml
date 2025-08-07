@@ -77,27 +77,30 @@ jobs:
                 buildozer android release --package-format=apk
               '
             "
-            
-      - name: Find APK or AAB
-        id: find_apk
-        run: |
-          file_path=$(find . -name "*.apk" -o -name "*.aab" | head -n 1)
-          echo "apk_path=$file_path" >> $GITHUB_OUTPUT
 
-      - name: Upload APK as Artifact
-        if: success()
+      - name: Suche .aab Datei
+        id: find_aab
+        run: |
+          AAB_FILE=$(find bin/ -name "*.aab" || true)
+          echo "aab_path=$AAB_FILE" >> $GITHUB_OUTPUT
+
+      - name: Konvertiere AAB zu APK (falls AAB vorhanden)
+        if: steps.find_aab.outputs.aab_path != ''
+        run: |
+          curl -Lo bundletool.jar https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
+
+          java -jar bundletool.jar build-apks \
+            --bundle=${{ steps.find_aab.outputs.aab_path }} \
+            --output=app.apks \
+            --mode=universal \
+            --overwrite
+
+          unzip -o app.apks -d output
+
+      - name: Lade APK hoch
         uses: actions/upload-artifact@v4
         with:
           name: Aurelia-APK
-          path: ${{ steps.find_apk.outputs.apk_path }}
-
-      - name: Convert AAB to APK
-        run: |
-         curl -Lo bundletool.jar https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
-         java -jar bundletool.jar build-apks \
-         --bundle=bin/*.aab \
-         --output=output.apks \
-         --mode=universal \
-          --overwrite
-          unzip output.apks -d output
-
+          path: |
+            output/universal.apk
+            bin/*.apk

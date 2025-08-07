@@ -36,7 +36,7 @@ jobs:
               echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
           RUN mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools && \
-              curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
+              curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-latest.zip && \
               unzip /tmp/cmdline-tools.zip -d /tmp && \
               mv /tmp/cmdline-tools \$ANDROID_SDK_ROOT/cmdline-tools/latest && \
               rm /tmp/cmdline-tools.zip && \

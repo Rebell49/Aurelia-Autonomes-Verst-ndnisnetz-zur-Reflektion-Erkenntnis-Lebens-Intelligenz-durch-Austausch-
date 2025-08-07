@@ -74,10 +74,16 @@ jobs:
                   echo \"Patching jnius_utils.pxi...\"
                   sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"
                 fi
-                buildozer android release
+                buildozer android release --package-format=apk
               '
             "
             
+      - name: Find built APK
+        id: find_apk
+        run: |
+          apk_path=$(find . -name "*.apk" | head -n 1)
+          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+
       - name: Upload APK as Artifact
         if: success()
         uses: actions/upload-artifact@v4

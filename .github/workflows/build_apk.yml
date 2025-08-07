@@ -59,12 +59,14 @@ jobs:
           chown -R builduser:builduser /home/builduser/.buildozer && \
           chown -R builduser:builduser /home/builduser/app && \
           su builduser -c '\
+          yes | sdkmanager --licenses > /dev/null && \
           cd /home/builduser/app && \
           buildozer android release || true && \
           JNIUS_PXI=\"\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1)\" && \
           if [ -n \"\$JNIUS_PXI\" ]; then sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; fi && \
           buildozer android release' \
             "
+
 
       - name: Locate APK (debug)
         id: find_apk

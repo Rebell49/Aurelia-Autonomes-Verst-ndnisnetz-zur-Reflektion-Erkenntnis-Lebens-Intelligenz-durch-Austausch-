@@ -5,7 +5,7 @@ package.domain = org.aurelia
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
-requirements = python3,kivy,packaging,colorama,openssl,pyopenssl,requests
+requirements = python3,kivy,packaging,colorama,openssl,pyopenssl,requests,cython
 orientation = portrait
 fullscreen = 1
 osx.python_version = 3
@@ -29,5 +29,4 @@ android.accept_sdk_license = true
 android.build_tools_version = 34.0.0
 
 [android]
-# Falls du Intent-Filter brauchst, hier ein Beispiel:
 # android.manifest.intent_filters = <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>

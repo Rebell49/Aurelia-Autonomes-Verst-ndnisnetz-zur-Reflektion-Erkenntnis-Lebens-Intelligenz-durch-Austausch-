@@ -77,19 +77,7 @@ jobs:
                 buildozer android release
               '
             "
-
-      - name: Locate APK
-        id: find_apk
-        run: |
-          echo "Suche nach APK..."
-          apk_path=$(find . -type f -name "*.apk" | head -n 1 || true)
-          if [ -z "$apk_path" ]; then
-            echo "Keine APK gefunden!"
-            exit 1
-          fi
-          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
-          echo "Gefundene APK: $apk_path"
-
+            
       - name: Upload APK as Artifact
         if: success()
         uses: actions/upload-artifact@v4

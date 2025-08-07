@@ -52,17 +52,18 @@ jobs:
 
       - name: Run Buildozer as non-root, fix jnius_utils.pxi, accept licenses and build
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/home/builduser/app \
-            custom-buildozer bash -c "\
-              mkdir -p /home/builduser/.buildozer/cache && \
-              chown -R builduser:builduser /home/builduser/.buildozer && \
-              chown -R builduser:builduser /home/builduser/app && \
-              su builduser -c '\
-                sed -i \"s/\\blong\\b/int/g\" ~/.buildozer/android/platform/python-for-android/pythonforandroid/recipes/pyjnius/jnius_utils.pxi || true && \
-                yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses && \
-                ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \"build-tools;36.0.0\" && \
-                cd /home/builduser/app && buildozer android release' \
+         docker run --rm \
+          -v ${{ github.workspace }}:/home/builduser/app \
+          custom-buildozer bash -c "\
+           mkdir -p /home/builduser/.buildozer/cache && \
+          chown -R builduser:builduser /home/builduser/.buildozer && \
+          chown -R builduser:builduser /home/builduser/app && \
+          su builduser -c '\
+          cd /home/builduser/app && \
+          buildozer android release || true && \
+          JNIUS_PXI=\"\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1)\" && \
+          if [ -n \"\$JNIUS_PXI\" ]; then sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; fi && \
+          buildozer android release' \
             "
 
       - name: Locate APK (debug)

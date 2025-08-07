@@ -45,6 +45,9 @@ jobs:
           RUN yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" && \
               yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
+          # Workaround für Buildozer: symbolischer Link zu sdkmanager im alten Pfad
+          RUN ln -s \$ANDROID_SDK_ROOT/cmdline-tools/latest \$ANDROID_SDK_ROOT/tools
+
           WORKDIR /home/builduser/app
           EOF
 

@@ -21,15 +21,16 @@ jobs:
           ENV PATH=\$PATH:\$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\$ANDROID_SDK_ROOT/platform-tools
 
           RUN apt-get update && apt-get install -y \
-              git zip unzip openjdk-17-jdk python3-pip \
-              build-essential libtool m4 automake autoconf \
+              git zip unzip openjdk-17-jdk python3-pip python3-dev build-essential \
+              libtool m4 automake autoconf \
               libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
               libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
               gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
               libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
               libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
-              python3-setuptools python3-wheel pkg-config cmake curl sudo && \
-              pip3 install --upgrade "Cython<3.0" virtualenv buildozer && \
+              python3-setuptools python3-wheel pkg-config cmake curl sudo libssl-dev && \
+              pip3 install --upgrade pip setuptools wheel && \
+              pip3 install "Cython<3.0" virtualenv buildozer && \
               useradd -ms /bin/bash builduser && \
               echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 

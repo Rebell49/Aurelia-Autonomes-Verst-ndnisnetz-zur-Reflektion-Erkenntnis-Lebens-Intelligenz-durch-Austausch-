@@ -74,33 +74,23 @@ jobs:
                   echo \"Patching jnius_utils.pxi...\"
                   sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"
                 fi
-                buildozer android release --package-format=apk
+                buildozer android release --package-format=aab
               '
             "
 
-      - name: Suche .aab Datei
-        id: find_aab
+      - name: Install bundletool and convert AAB to APK
         run: |
-          AAB_FILE=$(find bin/ -name "*.aab" || true)
-          echo "aab_path=$AAB_FILE" >> $GITHUB_OUTPUT
-
-      - name: Konvertiere AAB zu APK (falls AAB vorhanden)
-        if: steps.find_aab.outputs.aab_path != ''
-        run: |
-          curl -Lo bundletool.jar https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
-
-          java -jar bundletool.jar build-apks \
-            --bundle=${{ steps.find_aab.outputs.aab_path }} \
+          mkdir -p tools
+          curl -Lo tools/bundletool.jar https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
+          java -jar tools/bundletool.jar build-apks \
+            --bundle=$(find . -name "*.aab" | head -n 1) \
             --output=app.apks \
             --mode=universal \
             --overwrite
-
           unzip -o app.apks -d output
 
-      - name: Lade APK hoch
+      - name: Upload APK as GitHub Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Aurelia-APK
-          path: |
-            output/universal.apk
-            bin/*.apk
+          name: Aurelia-Universal-APK
+          path: output/universal.apk

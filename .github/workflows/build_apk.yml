@@ -78,11 +78,11 @@ jobs:
               '
             "
             
-      - name: Find built APK
+      - name: Find APK or AAB
         id: find_apk
         run: |
-          apk_path=$(find . -name "*.apk" | head -n 1)
-          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+          file_path=$(find . -name "*.apk" -o -name "*.aab" | head -n 1)
+          echo "apk_path=$file_path" >> $GITHUB_OUTPUT
 
       - name: Upload APK as Artifact
         if: success()

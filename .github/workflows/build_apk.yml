@@ -32,8 +32,6 @@ jobs:
               pip3 install --upgrade pip setuptools wheel && \
               pip3 install "Cython<3.0" virtualenv buildozer
 
-          ENV PATH=/home/builduser/.local/bin:\$PATH
-
           RUN useradd -ms /bin/bash builduser && \
               echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
@@ -55,24 +53,25 @@ jobs:
         run: docker build -t custom-buildozer .
 
       - name: Fix permissions
-        run: sudo chown -R 1000:1000 .
+        run: sudo chown -R 1000:1000 ${{ github.workspace }}
 
       - name: Run Buildozer and log output
         run: |
           docker run --rm \
-          -v ${{ github.workspace }}:/home/builduser/app \
-          custom-buildozer bash -c "\
-            mkdir -p /home/builduser/.buildozer/cache && \
-            chown -R builduser:builduser /home/builduser/.buildozer && \
-            chown -R builduser:builduser /home/builduser/app && \
-            su builduser -c '\
-              cd /home/builduser/app && \
-              buildozer android release --log buildozer.log && \
-              JNIUS_PXI=\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1) && \
-              if [ -n \"\$JNIUS_PXI\" ]; then sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; fi && \
-              buildozer android release --log buildozer.log \
-            ' \
-          "
+            -v ${{ github.workspace }}:/home/builduser/app \
+            -e ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk \
+            -e PATH=/home/builduser/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:/home/builduser/.buildozer/android/platform/android-sdk/platform-tools:$PATH \
+            custom-buildozer bash -c "\
+              mkdir -p /home/builduser/.buildozer/cache && \
+              chown -R builduser:builduser /home/builduser/.buildozer && \
+              chown -R builduser:builduser /home/builduser/app && \
+              su builduser -c '\
+                cd /home/builduser/app && \
+                JNIUS_PXI=\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1) && \
+                if [ -n \"\$JNIUS_PXI\" ]; then sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; fi && \
+                buildozer android release --log buildozer.log \
+              ' \
+            "
 
       - name: Locate APK
         id: find_apk

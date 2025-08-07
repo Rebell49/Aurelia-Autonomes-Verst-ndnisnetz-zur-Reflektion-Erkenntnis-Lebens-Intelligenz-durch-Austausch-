@@ -16,7 +16,7 @@ jobs:
           cat <<EOF > Dockerfile
           FROM ubuntu:22.04
           ENV DEBIAN_FRONTEND=noninteractive
-          ENV ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk
+          ENV ANDROID_SDK_ROOT=/opt/android-sdk
           ENV PATH=\$PATH:\$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\$ANDROID_SDK_ROOT/platform-tools
           RUN apt-get update && apt-get install -y \
               git zip unzip openjdk-17-jdk python3-pip \
@@ -27,21 +27,16 @@ jobs:
               libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
               libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
               libssl-dev openssl \
-              python3-setuptools python3-wheel pkg-config cmake curl sudo && \
+              python3-setuptools python3-wheel pkg-config cmake curl && \
               pip3 install --upgrade pip setuptools wheel && \
               pip3 install "Cython<3.0" virtualenv buildozer
-          RUN useradd -ms /bin/bash builduser && \
-              echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
           RUN mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools && \
               curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
               unzip /tmp/cmdline-tools.zip -d /tmp && \
               mv /tmp/cmdline-tools \$ANDROID_SDK_ROOT/cmdline-tools/latest && \
-              rm /tmp/cmdline-tools.zip && \
-              mkdir -p \$ANDROID_SDK_ROOT/tools/bin && \
-              ln -s \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \$ANDROID_SDK_ROOT/tools/bin/sdkmanager
-          RUN yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "build-tools;36.0.0" && \
-              yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --licenses
-          WORKDIR /home/builduser/app
+              yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --licenses && \
+              yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          WORKDIR /app
           EOF
 
       - name: Build Docker image
@@ -50,30 +45,18 @@ jobs:
       - name: Fix permissions
         run: sudo chown -R 1000:1000 ${{ github.workspace }}
 
-      - name: Run Buildozer and log output
+      - name: Run Buildozer
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/home/builduser/app \
-            -e ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk \
-            -e PATH=/home/builduser/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:/home/builduser/.buildozer/android/platform/android-sdk/platform-tools:$PATH \
+            -v ${{ github.workspace }}:/app \
             custom-buildozer bash -c "
-              mkdir -p /home/builduser/.buildozer/cache &&
-              chown -R builduser:builduser /home/builduser/.buildozer &&
-              chown -R builduser:builduser /home/builduser/app &&
-              su builduser -c '
-                cd /home/builduser/app &&
-                echo \"==> Versuche Buildozer...\" &&
-                JNIUS_PXI=\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1) &&
-                if [ -n \"\$JNIUS_PXI\" ]; then
-                  echo \"Patching jnius_utils.pxi...\"
-                  sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"
-                fi &&
-                buildozer android release --log buildozer.log || (
-                  echo \"Erster Build fehlgeschlagen. Versuche erneut...\" &&
-                  sleep 10 &&
-                  buildozer android release --log buildozer.log
-                )
-              '
+              cd /app &&
+              echo '==> Versuche Buildozer-Build...' &&
+              buildozer android release --log buildozer.log || (
+                echo 'Erster Versuch fehlgeschlagen. Zweiter Versuch...' &&
+                sleep 10 &&
+                buildozer android release --log buildozer.log
+              )
             "
 
       - name: Locate APK
@@ -85,29 +68,4 @@ jobs:
             echo "Keine APK gefunden!"
             exit 1
           fi
-          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
-          echo "Gefundene APK: $apk_path"
-
-      - name: Upload APK as Artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Aurelia-APK
-          path: ${{ steps.find_apk.outputs.apk_path }}
-
-      - name: Create GitHub Release
-        if: success()
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "APK Build ${{ github.run_number }}"
-          tag_name: "v${{ github.run_number }}"
-          files: ${{ steps.find_apk.outputs.apk_path }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Buildozer Log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: buildozer-log
-          path: buildozer.log
+          echo "apk_path=$apk_path" >>

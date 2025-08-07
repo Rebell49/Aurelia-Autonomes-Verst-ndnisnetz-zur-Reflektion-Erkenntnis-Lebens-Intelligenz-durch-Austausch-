@@ -29,7 +29,7 @@ jobs:
               libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
               libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
               python3-setuptools python3-wheel pkg-config cmake curl sudo && \
-              pip3 install --upgrade Cython virtualenv buildozer && \
+              pip3 install --upgrade "Cython<3.0" virtualenv buildozer && \
               useradd -ms /bin/bash builduser && \
               echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
@@ -41,6 +41,7 @@ jobs:
               mkdir -p \$ANDROID_SDK_ROOT/tools/bin && \
               ln -s \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \$ANDROID_SDK_ROOT/tools/bin/sdkmanager
 
+          # Build-Tools 36 installieren und Lizenzen akzeptieren
           RUN yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "build-tools;36.0.0" && \
               yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --licenses
 
@@ -53,24 +54,21 @@ jobs:
       - name: Fix permissions
         run: sudo chown -R 1000:1000 .
 
-      - name: Unset GitHub extraheader (Fix für .extraheader Fehler)
-        run: git config --global --unset-all http.https://github.com/.extraheader || true
-
       - name: Run Buildozer as non-root, fix jnius_utils.pxi and build
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/home/builduser/app \
-            custom-buildozer bash -c "\
-              mkdir -p /home/builduser/.buildozer/cache && \
-              chown -R builduser:builduser /home/builduser/.buildozer && \
-              chown -R builduser:builduser /home/builduser/app && \
-              su builduser -c '\
-                cd /home/builduser/app && \
-                buildozer android release || true && \
-                JNIUS_PXI=\"\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1)\" && \
-                if [ -n \"\$JNIUS_PXI\" ]; then sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; fi && \
-                buildozer android release' \
-            "
+          -v ${{ github.workspace }}:/home/builduser/app \
+          custom-buildozer bash -c "\
+            mkdir -p /home/builduser/.buildozer/cache && \
+            chown -R builduser:builduser /home/builduser/.buildozer && \
+            chown -R builduser:builduser /home/builduser/app && \
+            su builduser -c '\
+              cd /home/builduser/app && \
+              buildozer android release || true && \
+              JNIUS_PXI=\"\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1)\" && \
+              if [ -n \"\$JNIUS_PXI\" ]; then sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; fi && \
+              buildozer android release' \
+          "
 
       - name: Locate APK (debug)
         id: find_apk
@@ -78,17 +76,21 @@ jobs:
           echo "Aktueller Ordner: $(pwd)"
           echo "Alle Dateien im Workspace:"
           find ${{ github.workspace }} -type f
+
           apk_path=$(find ${{ github.workspace }} -type f -name "*.apk" | head -n 1 || echo "")
           echo "Gefundener APK-Pfad: $apk_path"
+
           if [ -z "$apk_path" ]; then
             echo "Keine APK-Datei gefunden! Suche auch im app-Verzeichnis (Docker-Volume):"
             apk_path=$(find ${{ github.workspace }}/app -type f -name "*.apk" | head -n 1 || echo "")
             echo "Gefundener APK-Pfad im app-Verzeichnis: $apk_path"
           fi
+
           if [ -z "$apk_path" ]; then
             echo "Keine APK gefunden, Abbruch."
             exit 1
           fi
+
           echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
 
       - name: Upload APK

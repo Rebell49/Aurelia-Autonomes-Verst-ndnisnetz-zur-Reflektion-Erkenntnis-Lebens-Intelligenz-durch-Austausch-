@@ -78,17 +78,6 @@ jobs:
               '
             "
 
-      - name: Install bundletool and convert AAB to APK
-        run: |
-          mkdir -p tools
-          curl -Lo tools/bundletool.jar https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
-          java -jar tools/bundletool.jar build-apks \
-            --bundle=$(find . -name "*.aab" | head -n 1) \
-            --output=app.apks \
-            --mode=universal \
-            --overwrite
-          unzip -o app.apks -d output
-
       - name: Upload APK as GitHub Artifact
         uses: actions/upload-artifact@v4
         with:

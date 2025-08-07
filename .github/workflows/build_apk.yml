@@ -28,8 +28,7 @@ jobs:
               gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav \
               libmtdev-dev libgl1-mesa-dev libgles2-mesa-dev libusb-dev libspnav-dev \
               libasound2-dev libffi-dev libjpeg-dev libstdc++6 libncurses-dev \
-              python3-setuptools python3-wheel pkg-config cmake curl sudo \
-              libssl-dev libbz2-dev libreadline-dev && \
+              python3-setuptools python3-wheel pkg-config cmake curl sudo && \
               pip3 install --upgrade "Cython<3.0" virtualenv buildozer && \
               useradd -ms /bin/bash builduser && \
               echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
@@ -54,7 +53,7 @@ jobs:
       - name: Fix permissions
         run: sudo chown -R 1000:1000 .
 
-      - name: Run Buildozer as non-root, fix jnius_utils.pxi and build
+      - name: Run Buildozer and log output
         run: |
           docker run --rm \
           -v ${{ github.workspace }}:/home/builduser/app \
@@ -64,43 +63,45 @@ jobs:
             chown -R builduser:builduser /home/builduser/app && \
             su builduser -c '\
               cd /home/builduser/app && \
-              echo \"[INFO] Starte ersten Build zum Fixen von jnius_utils.pxi\" && \
-              buildozer android release || true && \
+              buildozer android release --log buildozer.log && \
               JNIUS_PXI=\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1) && \
-              if [ -n \"\$JNIUS_PXI\" ]; then \
-                echo \"[INFO] jnius_utils.pxi gefunden: \$JNIUS_PXI - wende Fix an.\" && \
-                sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; \
-              fi && \
-              echo \"[INFO] Starte finalen Build\" && \
-              buildozer android release \
+              if [ -n \"\$JNIUS_PXI\" ]; then sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"; fi && \
+              buildozer android release --log buildozer.log \
             ' \
           "
 
-      - name: Locate APK (debug)
+      - name: Locate APK
         id: find_apk
         run: |
-          echo "Aktueller Ordner: $(pwd)"
-          echo "Alle Dateien im Workspace:"
-          find ${{ github.workspace }} -type f
-
-          apk_path=$(find ${{ github.workspace }} -type f -name "*.apk" | head -n 1 || echo "")
-          echo "Gefundener APK-Pfad: $apk_path"
+          echo "Suche nach APK..."
+          apk_path=$(find ${{ github.workspace }} -type f -name "*.apk" | head -n 1 || true)
 
           if [ -z "$apk_path" ]; then
-            echo "Keine APK-Datei gefunden! Suche auch im app-Verzeichnis:"
-            apk_path=$(find ${{ github.workspace }}/app -type f -name "*.apk" | head -n 1 || echo "")
-            echo "Gefundener APK-Pfad im app-Verzeichnis: $apk_path"
-          fi
-
-          if [ -z "$apk_path" ]; then
-            echo "Keine APK gefunden, Abbruch."
+            echo "Keine APK gefunden!"
             exit 1
           fi
 
           echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+          echo "Gefundene APK: $apk_path"
 
-      - name: Upload APK
+      - name: Upload APK as Artifact (optional)
         uses: actions/upload-artifact@v4
         with:
           name: Aurelia-APK
           path: ${{ steps.find_apk.outputs.apk_path }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "APK Build ${{ github.run_number }}"
+          tag_name: "v${{ github.run_number }}"
+          files: ${{ steps.find_apk.outputs.apk_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Buildozer Log (immer)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-log
+          path: buildozer.log

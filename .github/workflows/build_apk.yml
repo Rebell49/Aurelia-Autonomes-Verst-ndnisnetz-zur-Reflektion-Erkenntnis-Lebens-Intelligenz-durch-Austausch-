@@ -91,12 +91,13 @@ jobs:
           name: Aurelia-APK
           path: ${{ steps.find_apk.outputs.apk_path }}
 
-      - name: Create GitHub Release
-        if: success()
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "APK Build ${{ github.run_number }}"
-          tag_name: "v${{ github.run_number }}"
-          files: ${{ steps.find_apk.outputs.apk_path }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Convert AAB to APK
+        run: |
+         curl -Lo bundletool.jar https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
+         java -jar bundletool.jar build-apks \
+         --bundle=bin/*.aab \
+         --output=output.apks \
+         --mode=universal \
+          --overwrite
+          unzip output.apks -d output
+

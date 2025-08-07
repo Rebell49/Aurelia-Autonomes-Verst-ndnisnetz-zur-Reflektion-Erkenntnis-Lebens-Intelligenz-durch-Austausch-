@@ -22,6 +22,7 @@ android.ndk = 25b
 android.ndk_path =
 android.sdk_path =
 android.private_storage = True
+android.package_format = apk
 android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,FOREGROUND_SERVICE,
 android.arch = arm64-v8a
 android.gradle_dependencies =

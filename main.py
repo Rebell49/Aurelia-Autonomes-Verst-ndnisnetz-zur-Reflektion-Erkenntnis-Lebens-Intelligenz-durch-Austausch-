@@ -1,5 +1,7 @@
-﻿import os
+import os
 import json
+import traceback
+import sys
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
@@ -13,13 +15,34 @@ from thought_stream import ThoughtStream
 
 CONFIG_PATH = "config.json"
 
+
+def write_crash(exc_info):
+    """Schreibt Crash-Informationen in eine Datei auf dem Gerät."""
+    try:
+        path = os.path.join(
+            os.getenv('EXTERNAL_STORAGE', '/sdcard'),
+            'aurelia_crash.txt'
+        )
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write("Aurelia Crash Report\n")
+            f.write("=" * 40 + "\n\n")
+            traceback.print_exception(*exc_info, file=f)
+        print(f"[AURELIA] Crash-Log gespeichert unter: {path}")
+    except Exception as e:
+        print(f"[AURELIA] Konnte Crash-Log nicht schreiben: {e}")
+
+
 class PermissionPopup(Popup):
     def __init__(self, accept_callback, **kwargs):
         super().__init__(**kwargs)
         self.title = "Erlaubnis erfragen"
         self.size_hint = (0.8, 0.5)
         self.accept_callback = accept_callback
-        self.content = FileChooserListView(path=os.path.expanduser("~"), filters=["*/"], dirselect=True)
+        self.content = FileChooserListView(
+            path=os.path.expanduser("~"),
+            filters=["*/"],
+            dirselect=True
+        )
         self.content.bind(on_submit=self.on_select)
 
     def on_select(self, chooser, selection, touch):
@@ -27,16 +50,21 @@ class PermissionPopup(Popup):
             self.dismiss()
             self.accept_callback(selection[0])
 
+
 class AureliaApp(App):
     def build(self):
-        self.load_config()
-        self.root = BoxLayout()
-        if not self.config.get("archive_path"):
-            self.permission_popup = PermissionPopup(self.on_archive_selected)
-            self.permission_popup.open()
-        else:
-            self.start_aurelia(self.config["archive_path"])
-        return self.root
+        try:
+            self.load_config()
+            self.root = BoxLayout()
+            if not self.config.get("archive_path"):
+                self.permission_popup = PermissionPopup(self.on_archive_selected)
+                self.permission_popup.open()
+            else:
+                self.start_aurelia(self.config["archive_path"])
+            return self.root
+        except Exception:
+            write_crash(sys.exc_info())
+            raise
 
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
@@ -69,5 +97,10 @@ class AureliaApp(App):
         self.thought_stream.update()
         self.ui.update_thought_display()
 
+
 if __name__ == "__main__":
-    AureliaApp().run()
+    try:
+        AureliaApp().run()
+    except Exception:
+        write_crash(sys.exc_info())
+        raise

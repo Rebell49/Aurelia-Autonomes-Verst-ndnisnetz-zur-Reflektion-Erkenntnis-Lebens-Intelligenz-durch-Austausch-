@@ -8,7 +8,11 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
+from kivy.utils import platform
 
+# Android Permissions importieren, wenn Android-Plattform
+if platform == "android":
+    from android.permissions import request_permissions, Permission, check_permission
 
 # -------------------------------
 # Fehler-Logging (global)
@@ -151,11 +155,34 @@ class AureliaUI(BoxLayout):
 
 
 # -------------------------------
+# Android Berechtigungen prüfen und anfragen
+# -------------------------------
+def check_and_request_permissions():
+    if platform == "android":
+        required_permissions = [
+            Permission.READ_EXTERNAL_STORAGE,
+            Permission.WRITE_EXTERNAL_STORAGE,
+            Permission.FOREGROUND_SERVICE,
+        ]
+        missing = [p for p in required_permissions if not check_permission(p)]
+
+        if missing:
+            request_permissions(missing)
+            print("[AURELIA] Fehlende Berechtigungen angefragt")
+        else:
+            print("[AURELIA] Alle Berechtigungen bereits erteilt")
+    else:
+        print("[AURELIA] Keine Android-Plattform, keine Berechtigungen erforderlich")
+
+
+# -------------------------------
 # App-Start
 # -------------------------------
 class AureliaApp(App):
     def build(self):
         try:
+            check_and_request_permissions()
+
             self.archive_manager = ArchiveManager(
                 os.path.join(os.getenv('EXTERNAL_STORAGE', '/sdcard'), "Aurelia")
             )

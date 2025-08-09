@@ -1,23 +1,28 @@
-name: Build APK
+name: Build Aurelia Android
 
 on:
   workflow_dispatch:
+    inputs:
+      package_format:
+        description: "Paketformat auswählen (apk oder aab)"
+        required: true
+        default: "aab"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: Create Dockerfile
+      - name: 🛠️ Dockerfile erstellen
         run: |
-          cat <<EOF > Dockerfile
+          cat <<'EOF' > Dockerfile
           FROM ubuntu:22.04
           ENV DEBIAN_FRONTEND=noninteractive
           ENV ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk
-          ENV PATH=\$PATH:\$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\$ANDROID_SDK_ROOT/platform-tools
+          ENV PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
 
           RUN apt-get update && apt-get install -y \
             git zip unzip openjdk-17-jdk python3-pip \
@@ -35,53 +40,49 @@ jobs:
           RUN useradd -ms /bin/bash builduser && \
             echo 'builduser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-          RUN mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools && \
+          RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
             curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
             unzip /tmp/cmdline-tools.zip -d /tmp/cmdline-tools && \
-            mkdir -p \$ANDROID_SDK_ROOT/cmdline-tools/latest && \
-            mv /tmp/cmdline-tools/cmdline-tools/* \$ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
+            mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
+            mv /tmp/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
             rm -rf /tmp/cmdline-tools /tmp/cmdline-tools.zip
 
-          RUN yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=\$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" && \
-              yes | \$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          RUN yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" && \
+              yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
-          RUN ln -s \$ANDROID_SDK_ROOT/cmdline-tools/latest \$ANDROID_SDK_ROOT/tools
+          RUN ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
 
           WORKDIR /home/builduser/app
           EOF
 
-      - name: Build Docker image
+      - name: 🏗️ Docker-Image bauen
         run: docker build -t custom-buildozer .
 
-      - name: Fix permissions
+      - name: 🔧 Rechte korrigieren
         run: sudo chown -R 1000:1000 ${{ github.workspace }}
 
-      - name: Run Buildozer
+      - name: 🚀 Buildozer ausführen
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/home/builduser/app \
-            -e ANDROID_SDK_ROOT=/home/builduser/.buildozer/android/platform/android-sdk \
-            -e PATH=/home/builduser/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:/home/builduser/.buildozer/android/platform/android-sdk/platform-tools:$PATH \
             custom-buildozer bash -c "
               mkdir -p /home/builduser/.buildozer/cache &&
               chown -R builduser:builduser /home/builduser/.buildozer &&
               chown -R builduser:builduser /home/builduser/app &&
               su builduser -c '
                 cd /home/builduser/app &&
-                echo \"==> Starte Buildozer...\" &&
+                echo \"==> Starte Buildozer Build...\"
                 JNIUS_PXI=\$(find ~/.buildozer -name jnius_utils.pxi | head -n 1)
                 if [ -n \"\$JNIUS_PXI\" ]; then
                   echo \"Patching jnius_utils.pxi...\"
                   sed -i \"s/\\blong\\b/int/g\" \"\$JNIUS_PXI\"
                 fi
-                buildozer android release --package-format=aab
+                buildozer android release --package-format=${{ github.event.inputs.package_format }}
               '
             "
 
-      - name: Upload artifact
+      - name: 📦 Build-Artifact hochladen
         uses: actions/upload-artifact@v4
-         with:
-          name: Aurelia-AAB
-          path: bin/*.aab
-
-
+        with:
+          name: Aurelia-${{ github.event.inputs.package_format }}
+          path: bin/*.${{ github.event.inputs.package_format }}

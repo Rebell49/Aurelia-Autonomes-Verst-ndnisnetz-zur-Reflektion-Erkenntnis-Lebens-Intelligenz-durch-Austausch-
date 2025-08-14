@@ -15,7 +15,13 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.utils import platform
-from kivy.metrics import dp
+from kivy.metrics import dp 
+from kivy.core.window import Window
+from ui import AureliaUI
+from archive_manager import ArchiveManager
+from thought_stream import ThoughtStream
+from resource_manager import ResourceManager
+
 
 # Android Permissions importieren, wenn Android-Plattform
 if platform == "android":
